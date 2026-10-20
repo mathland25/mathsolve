@@ -22,3 +22,7 @@
 
 ## 교과서 생각 다지기 데이터
 - data/g2-2-v-tb.js (도형의 닮음 ①②), g2-2-v-tb2.js (닮은 도형의 성질 ①②), g2-2-vi.js (경우의 수 ①②, 확률 ①②), g2-2-vi-m.js (단원 매듭 ①②③). 각 교과서 문항 뒤에 유사 문제를 붙였고, 정답은 tools/verify.js가 조건에서 다시 계산한다.
+
+## 화면 구성
+- index.html: 학생용 (교사용 링크 없음)
+- teacher.html: 교사용 전용 (시트 자동 읽기, 학급별 집계, 반 이동). 주소: https://mathland25.github.io/mathsolve/teacher.html
