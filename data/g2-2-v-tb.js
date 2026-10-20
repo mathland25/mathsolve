@@ -83,7 +83,7 @@
   const N = (o, extra) => Object.assign({}, o, extra);
 
   const L1 = {
-    id: 's91', label: '생각 다지기 ①', title: '교과서 기본 문제 + 유사', el: '닮은 도형의 성질 · 삼각형의 닮음 조건 · 닮은 도형의 넓이와 부피의 비',
+    id: 's91', label: '도형의 닮음 ①', title: '교과서 기본 문제 + 유사', el: '닮은 도형의 성질 · 삼각형의 닮음 조건 · 닮은 도형의 넓이와 부피의 비',
     concept: { id: null, label: C1 }, concepts: [C1, C2, C7], core: core1,
     qs: [
       N(b, { tag: T('01'), concept: C1, t: 'steps', q: '△ABC ∽ △DEF입니다. BC = 4 cm, EF = 8 cm, DE = 6 cm, ∠A = 80°, ∠B = 50°일 때 (1) 닮음비 (2) AB의 길이 (3) ∠E의 크기를 단계에 따라 구하세요.', fig: fig01, steps: [
@@ -125,7 +125,7 @@
     ] };
 
   const L2 = {
-    id: 's92', label: '생각 다지기 ②', title: '교과서 응용·도전 문제 + 유사', el: '닮은 도형의 넓이와 부피의 비 · 삼각형의 닮음 조건',
+    id: 's92', label: '도형의 닮음 ②', title: '교과서 응용·도전 문제 + 유사', el: '닮은 도형의 넓이와 부피의 비 · 삼각형의 닮음 조건',
     concept: { id: null, label: C7 }, concepts: [C7, C2], core: core2,
     qs: [
       N(ap, { tag: T('04'), concept: C7, t: 'steps', q: 'A0 용지를 반으로 자른 것이 A1, A1을 반으로 자른 것이 A2, …입니다. 모든 용지가 서로 닮은 도형일 때 (1) A0와 A4의 넓이의 비 (2) 닮음비를 구하세요.', fig: () => fig04('A0 용지를 반으로 자르면 A1, A1을 반으로 자르면 A2, 이렇게 계속 자른 그림'), steps: [

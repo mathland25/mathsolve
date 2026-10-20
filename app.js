@@ -214,12 +214,13 @@ function viewLesson(p, l) {
   s.view = Math.min(s.st, 2); paint();
   return h('div', {}, h('header', { class: 'top' }, h('div', { class: 'row', style: 'margin:0' }, h('button', { class: 'btn sm ghost', onclick: () => go('home'), text: '← 차시 목록' }), h('b', { text: lno(l) + ' · ' + l.title })), brand()), stepper, box);
 }
-const conceptLink = (l, q) => h('a', { class: 'btn sm', href: CONCEPT_URL, target: '_blank', rel: 'noopener', text: '개념 탐구 노트 ' + ((q && q.concept) || l.concept.label) + ' 다시 보기 ↗' });
+const cLabel = (l, q) => (q && q.concept !== undefined ? q.concept : l.concept && l.concept.label) || null;
+const conceptLink = (l, q) => cLabel(l, q) ? h('a', { class: 'btn sm', href: CONCEPT_URL, target: '_blank', rel: 'noopener', text: '개념 탐구 노트 ' + cLabel(l, q) + ' 다시 보기 ↗' }) : null;
 function stageCore(p, l, s, to) {
   return h('div', {}, h('section', { class: 'card sumcard' }, h('span', { class: 'chip', text: '시험 범위 · ' + l.el }), h('h2', { class: 'h2', style: 'margin-top:8px', text: '핵심 정리: ' + l.title }),
     l.core.defs.map(([a, b]) => h('div', { class: 'def' }, h('b', { text: a }), ' — ' + b)),
     h('ul', { class: 'points' }, l.core.points.map(t => h('li', { text: t }))), h('div', { class: 'fb hint', text: '주의: ' + l.core.note }),
-    h('div', { class: 'row' }, (l.concepts || [l.concept.label]).map(c => conceptLink(l, { concept: c })))),
+    (l.concepts || [cLabel(l)]).filter(Boolean).length ? h('div', { class: 'row' }, (l.concepts || [cLabel(l)]).filter(Boolean).map(c => conceptLink(l, { concept: c }))) : null),
     h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', text: '문제 풀기', onclick: () => to(1) })));
 }
 
@@ -267,7 +268,7 @@ function stageQs(p, l, s, to, touch, paintAll) {
   const wrong = x.tries > 0 && !x.ok;
   const cause = wrong ? h('div', { class: 'card', style: 'margin-top:10px' }, h('b', { text: '왜 틀렸을까요?' }), h('p', { class: 'note', style: 'margin:2px 0 0', text: '골라 두면 선생님이 어디를 도와줄지 알 수 있어요. (선택)' }),
     h('div', { class: 'causes' }, CAUSES.map((c, j) => h('button', { type: 'button', class: 'opt' + (x.cause === j ? ' sel' : ''), 'aria-pressed': x.cause === j ? 'true' : 'false', text: c, onclick: () => { x.cause = j; rp(); } })))) : null;
-  const link = x.cause === 0 && x.tries > 0 ? h('div', { class: 'fb hint' }, '개념부터 다시 확인해 봐요. ', conceptLink(l, q)) : null;
+  const link = x.cause === 0 && x.tries > 0 && cLabel(l, q) ? h('div', { class: 'fb hint' }, '개념부터 다시 확인해 봐요. ', conceptLink(l, q)) : null;
   const last = i === l.qs.length - 1;
   const nav = h('div', { class: 'row' },
     i > 0 ? h('button', { class: 'btn', type: 'button', text: '← 이전', onclick: () => { s.qi = i - 1; touch(); paintAll(); window.scrollTo(0, 0); } }) : null,
@@ -284,7 +285,7 @@ function stageEnd(p, l, s, to, touch, paintAll) {
   const finish = () => { s.done = true; touch(); formSend(p, true); paintAll(); };
   const summary = h('section', { class: 'card' }, h('h2', { class: 'h2', text: '오늘 푼 결과' }),
     h('p', { style: 'margin:0', text: '첫 시도 정답 ' + c + ' / ' + n + '문항' }),
-    wrongs.length ? h('div', {}, h('p', { class: 'note', text: '다시 보면 좋은 문제: ' + wrongs.map(o => (o.i + 1) + '번').join(', ') }), h('div', { class: 'row' }, [...new Set(wrongs.map(o => o.q.concept || l.concept.label))].map(c => conceptLink(l, { concept: c })))) : h('p', { class: 'note', text: '모두 첫 시도에 맞혔어요!' }));
+    wrongs.length ? h('div', {}, h('p', { class: 'note', text: '다시 보면 좋은 문제: ' + wrongs.map(o => (o.i + 1) + '번').join(', ') }), h('div', { class: 'row' }, [...new Set(wrongs.map(o => cLabel(l, o.q)))].filter(Boolean).map(c => conceptLink(l, { concept: c })))) : h('p', { class: 'note', text: '모두 첫 시도에 맞혔어요!' }));
   const conf = h('section', { class: 'card', style: 'margin-top:12px' }, h('b', { text: '이 차시의 문제, 얼마나 자신 있나요?' }),
     h('div', { class: 'opts', style: 'margin-top:8px' }, CONF.map((o, j) => h('button', { type: 'button', class: 'opt' + (s.conf === j ? ' sel' : ''), 'aria-pressed': s.conf === j ? 'true' : 'false', disabled: s.done, text: o, onclick: () => { s.conf = j; touch(); paintAll(); } }))));
   const mk = (idx, lab, ph) => { const ta = h('textarea', { class: 'in', id: 'r' + idx, placeholder: ph, 'aria-label': lab, disabled: s.done }); ta.value = s.refl[idx] || '';
