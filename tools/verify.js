@@ -4,7 +4,7 @@ const root = path.join(__dirname, '..');
 const stub = new Proxy({}, { get: () => () => null });
 const win = { SF: stub }; win.window = win;
 vm.createContext(win);
-fs.readdirSync(path.join(root, 'data')).filter(f => f.endsWith('.js')).forEach(f => vm.runInContext(fs.readFileSync(path.join(root, 'data', f), 'utf8'), win));
+fs.readdirSync(path.join(root, 'data')).filter(f => f.endsWith('.js')).sort((a, b) => a.length - b.length).forEach(f => vm.runInContext(fs.readFileSync(path.join(root, 'data', f), 'utf8'), win));
 const grades = win.SOLVE_GRADES, lessons = grades.flatMap(g => g.units.flatMap(u => u.lessons.map(l => ({ ...l, unitName: u.name }))));
 let bad = 0; const fail = m => { bad++; console.log('✗ ' + m); }, ok = m => console.log('✓ ' + m);
 const eq = (a, b) => Math.abs(a - b) < 1e-9;
@@ -27,6 +27,41 @@ const exp = {
      () => 180 - 70 - 50]
   ]
 };
+
+// ---- 교과서 생각 다지기 (s91, s92): 조건에서 독립적으로 다시 계산 ----
+const R = (a, b) => { const g = gcd(a, b); return (a / g) + ' : ' + (b / g); };
+const dd = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+// 접기: 정삼각형 한 변 s, AE=a, BF=b → AD. 좌표로 대칭 이동해 DF = DA, EF = EA 가 성립하는지 점검한다.
+const foldAD = (s, a, b) => { const B = [0, 0], C = [s, 0], A = [s / 2, s * Math.sqrt(3) / 2], F = [b, 0], E = [A[0] + (C[0] - A[0]) * a / s, A[1] + (C[1] - A[1]) * a / s];
+  if (!eq(dd(E, F), a)) throw new Error('접기: EF ≠ EA'); const d = a * b / (s - a), D = [A[0] + (B[0] - A[0]) * d / s, A[1] + (B[1] - A[1]) * d / s];
+  if (!eq(dd(D, F), d)) throw new Error('접기: DF ≠ DA'); return d; };
+const sqSide = (ab, bc) => { const x = ab * bc / (ab + bc); if (!eq((ab - x) / ab, x / bc)) throw new Error('정사각형 비례식'); return x; };
+// 두 직선이 C에서 만나는 그림: 닮음 SAS 확인 / AB ∥ DE 에서 DE 계산
+const para = (AD, AF, CF) => { const CE = CF * AD / AF; return CE; };
+exp.s91 = [
+  [() => R(4, 8), () => 6 * 4 / 8, () => 50],
+  [() => R(12, 8), () => 15 * 8 / 12, () => 180 - 70 - 45],
+  () => 52 * (12 / 8) ** 2,
+  () => 75 * (6 / 10) ** 2,
+  [() => '△ABC ∽ △DEC', () => { if (!(eq(3 / 6, 4 / 8))) throw 0; return 'SAS 닮음'; }],
+  [() => '△ABC ∽ △DEC', () => 'AA 닮음', () => 5 * 8 / 4],
+  [() => { const r = [3, 4]; return (r[0] ** 2 + ':' + r[1] ** 2) === '9:16' ? '9 : 16' : 0; }, () => '27 : 64'],
+  [() => R(4, 10), () => 52 * (10 / 4) ** 2, () => 24 * (10 / 4) ** 3],
+  [() => { if (!(eq(4 / 12, 5 / 15))) throw 0; return '△ADE ∽ △ACB (SAS 닮음)'; }, () => 6 * 12 / 4, () => '△ABC ∽ △DAC (AA 닮음)', () => { const bc = 8 * 8 / 6; return bc - 6; }],
+  [() => { if (!(eq(3 / 6, 5 / 10))) throw 0; return '△ADE ∽ △ACB (SAS 닮음)'; }, () => 4 * 6 / 3, () => '△ABC ∽ △DAC (AA 닮음)', () => { const bc = 6 * 6 / 4; if (!eq(bc * 4, 36)) throw 0; return bc - 4; }]
+];
+exp.s92 = [
+  [() => 2 ** 4 + ' : 1', () => Math.sqrt(16) + ' : 1'],
+  [() => 2 ** 2 + ' : 1', () => Math.sqrt(4) + ' : 1', () => 10000 / 2 ** 3],
+  [() => '△AFD ∽ △CFE', () => para(9, 6, 4), () => 9 - para(9, 6, 4)],
+  [() => '△AFD ∽ △CFE', () => para(14, 8, 4), () => 14 - para(14, 8, 4)],
+  [() => 2 ** 3 + ' : ' + 3 ** 3, () => 350 * 27 / 35],
+  [() => 1 + ' : ' + 2 ** 3, () => 540 * 8 / 9],
+  [() => '△ADF ∽ △ABC', () => '(10 − x) : 10 = x : 15', () => sqSide(10, 15), () => sqSide(10, 15) ** 2],
+  [() => '△ADF ∽ △ABC', () => '(12 − x) : 12 = x : 24', () => sqSide(12, 24), () => sqSide(12, 24) ** 2],
+  [() => 'AA 닮음', () => 24 - 8, () => 24 - 14, () => '(24 − x) : 16 = 8 : 10', () => foldAD(24, 14, 8)],
+  [() => 'AA 닮음', () => 30 - 6, () => 30 - 21, () => '(30 − x) : 24 = 6 : 9', () => foldAD(30, 21, 6)]
+];
 const val = (sp, i, k) => sp.opts ? sp.opts[sp.ans] : sp.ans;
 lessons.forEach(l => {
   const E = exp[l.id]; if (!E) return fail(l.id + ': 검증식 없음');
@@ -59,7 +94,7 @@ ok('catalog.json ↔ 데이터 점검');
 
 // 4) 개념 탐구 노트와 평가 요소(el) 공유 확인 (저장소가 옆에 있을 때)
 const cp = '/home/claude/mathland25/mathconcept/catalog.json';
-if (fs.existsSync(cp)) { const cc = JSON.parse(fs.readFileSync(cp, 'utf8')); lessons.forEach(l => { const c = cc.lessons.find(x => x.id === l.concept.id); c && c.el === l.el ? ok(`${l.id} el = 개념 노트 ${l.concept.id} ("${l.el}")`) : fail(`${l.id} el이 개념 노트와 다름`); }); }
+if (fs.existsSync(cp)) { const cc = JSON.parse(fs.readFileSync(cp, 'utf8')); lessons.forEach(l => { if (!l.concept.id) return; const c = cc.lessons.find(x => x.id === l.concept.id); c && c.el === l.el ? ok(`${l.id} el = 개념 노트 ${l.concept.id} ("${l.el}")`) : fail(`${l.id} el이 개념 노트와 다름`); }); }
 
 // 5) 제출 코드 왕복: GN2z.<base64url(deflate-raw(JSON))>
 (async () => {
