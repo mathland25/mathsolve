@@ -142,6 +142,76 @@ exp.s101 = [
   [() => ((1 / 6) ** 2 + (2 / 6) ** 2 + (3 / 6) ** 2), () => 1 - ((1 / 6) ** 2 + (2 / 6) ** 2 + (3 / 6) ** 2)],
   [() => 36, () => sq(6, 2), () => sq(6, 2) / 36], [() => 36, () => sq(6, 0), () => sq(6, 0) / 36]
 ];
+
+// ---- 중3 Ⅴ. 통계 대푯값 (s111~s114): 원자료에서 평균·중앙값·최빈값을 독립적으로 다시 계산 ----
+const sum = a => a.reduce((x, y) => x + y, 0), mean = a => sum(a) / a.length;
+const med = a => { const s = [...a].sort((x, y) => x - y), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+const modes = a => { const c = {}; a.forEach(x => c[x] = (c[x] || 0) + 1); const m = Math.max(...Object.values(c)); return Object.keys(c).filter(k => c[k] === m).map(Number); };
+const mode1 = a => { const m = modes(a); if (m.length !== 1) throw new Error('최빈값이 하나가 아님: ' + a); return m[0]; };
+const stem = rows => rows.flatMap(([st, lv]) => lv.split(' ').map(l => Number(st) * 10 + Number(l)));
+// 줄기 29, 잎 0 → 290 처럼 줄기가 두 자리인 경우
+const stem2 = rows => rows.flatMap(([st, lv]) => lv.split(' ').map(l => Number(st) * 10 + Number(l)));
+// 최소 이동 개수 (동전 한 개씩 옮기기, BFS)
+const minMoves = (a, t) => { let fr = [a], seen = new Set([a.join()]); for (let d = 0; d <= 12; d++) { if (fr.some(s => med(s) === t)) return d; const nx = []; for (const s of fr) for (let i = 0; i < s.length; i++) if (s[i] > 0) for (let j = 0; j < s.length; j++) if (i !== j) { const c = [...s]; c[i]--; c[j]++; const k = c.join(); if (!seen.has(k)) { seen.add(k); nx.push(c); } } fr = nx; } return -1; };
+const MIDN = '중앙값', MOD = '최빈값';
+const three = a => [() => mean(a), () => med(a), () => mode1(a)];
+// 평균 ≠ 중앙값, 극단값이 있을 때 중앙값이 더 적절한지 (평균이 중앙값보다 자료 대부분에서 벗어나는지)
+const rice1 = [102.4, 99.2, 96.9, 93.6, 88.9, 87.0, 83.2, 82.0, 80.7, 78.8], rice2 = [76.9, 75.8, 74.0, 72.8, 71.2, 69.8, 67.2, 65.1, 62.9, 61.9];
+if (!eq(sum(rice1), 892.7) || !eq(sum(rice2), 697.6)) fail('쌀 소비량 합계가 표와 다름');
+const blood = [4.1, 4.4, 4.6, 4.5, 4.3, 4.2, 4.5, 4.4, 4.3, 4.3];
+const cake = stem2([['29', '0 1 1 3 4 5 9'], ['30', '1 3 3 3'], ['31', '2 4'], ['32', '1']]);
+const lf12 = stem([['1', '2 4 4 8'], ['2', '1 3 6 6 6'], ['3', '0 5 8']]);
+exp.s111 = [
+  three([3, 7, 2, 4, 5, 1, 5, 8, 5, 2]), three([30, 80, 20, 50, 60, 10, 60, 90, 60, 40]),
+  [() => med(blood), () => mode1(blood)], [() => med([8.2, 7.8, 8.0, 8.2, 7.9, 8.1, 8.2, 7.8]), () => mode1([8.2, 7.8, 8.0, 8.2, 7.9, 8.1, 8.2, 7.8])],
+  () => mean([67, 74, 68, 71, 75]), () => mean([14, 18, 20, 16, 12, 19]),
+  [() => med(cake), () => mode1(cake)], [() => med(lf12), () => mode1(lf12)],
+  [() => mean(rice1), () => mean(rice2), () => mean(rice1) > mean(rice2) ? '쌀 소비량이 줄고 있다' : '쌀 소비량이 늘고 있다'],
+  [() => mean([12, 15, 9, 14, 10]), () => mean([18, 16, 20, 13, 23]), () => mean([18, 16, 20, 13, 23]) > mean([12, 15, 9, 14, 10]) ? '2학기에 대출이 더 많았다' : '1학기에 대출이 더 많았다'],
+  three([5, 4, 4, 6, 2, 1, 6, 1, 3, 1]), three([3, 5, 2, 5, 6, 1, 5, 4, 2, 3])
+];
+// 극단값 때문에 평균이 대푯값으로 부적절한지: 평균보다 작은 자료가 과반(또는 과소)이면 중앙값
+const pick = a => { const m = mean(a), lo = a.filter(x => x < m).length, hi = a.filter(x => x > m).length; return (lo > 2 * hi || hi > 2 * lo) ? MIDN : '평균'; };
+const four = a => [() => mean(a), () => med(a), () => mode1(a), () => pick(a)];
+const fish = [49, 52, 47, 49, 119, 51, 45, 52], fish2 = [22, 25, 21, 24, 23, 26, 22, 77];
+exp.s112 = [
+  [() => mean([124, 153, 172, 537, 189]), () => med([124, 153, 172, 537, 189]), () => pick([124, 153, 172, 537, 189])],
+  [() => mean([30, 35, 40, 45, 250]), () => med([30, 35, 40, 45, 250]), () => pick([30, 35, 40, 45, 250])],
+  four([12, 2, 15, 13, 18, 2, 11, 105, 2, 15, 70, 1, 82, 16]), four([4, 6, 6, 8, 9, 10, 12, 13, 14, 118]),
+  four([4, 7, 13, 14, 17, 16, 135, 2, 4, 21]), four([2, 5, 3, 3, 9, 10, 4, 11, 3, 150]),
+  [() => { if (!eq(mean(fish), 58)) throw new Error('평균 58 아님'); return fish.filter(x => x < 58).length; }, () => med(fish), () => pick(fish)],
+  [() => mean(fish2), () => med(fish2), () => pick(fish2)],
+  [() => MOD, () => { const t = { 컬링: 4, 축구: 5, 야구: 8, 농구: 5, 탁구: 3 }; if (sum(Object.values(t)) !== 25) throw new Error('25명 아님'); return Object.keys(t).reduce((p, k) => t[k] > t[p] ? k : p); }],
+  [() => MOD, () => { const t = { 사과: 6, 귤: 4, 딸기: 9, 포도: 3, 바나나: 3 }; if (sum(Object.values(t)) !== 25) throw new Error('25명 아님'); return Object.keys(t).reduce((p, k) => t[k] > t[p] ? k : p); }]
+];
+// x를 구하는 문제: 후보를 모두 시험해 조건을 만족하는 값이 하나뿐인지 확인한다
+const sol = (f, lo = -50, hi = 200, step = 1) => { const r = []; for (let x = lo; x <= hi; x += step) if (f(x)) r.push(x); if (r.length !== 1) throw new Error('해가 하나가 아님: ' + r); return r[0]; };
+const avgMode = base => sol(x => { const a = [...base, x]; const m = modes(a); return m.length === 1 && eq(mean(a), m[0]); });
+const medX = (before, after, t) => sol(x => eq(med([...before, x, ...after]), t) && x >= before[before.length - 1] && x <= after[0]);
+const win10 = [14, 19, 25, 20, 30, 17, 22, 24, 17, 22], jump10 = [11, 16, 14, 20, 18, 12, 16, 13, 15, 25];
+// 자료 4개 중앙값: a가 어디에 있든 조건을 만족하는 a를 모두 찾는다
+const med4 = (base, t) => sol(a => eq(med([...base, a]), t), -50, 100, 1);
+exp.s113 = [
+  () => medX([3, 5], [9, 11, 12], 8), () => medX([2, 4], [10, 12, 13], 9),
+  [() => '90, 84, 76, 86 중 하나', () => avgMode([90, 84, 76, 86])], [() => '11, 6, 10, 13 중 하나', () => avgMode([11, 6, 10, 13])],
+  [() => mean(win10), () => med(win10), () => mean(win10) + med(win10)], [() => mean(jump10), () => med(jump10), () => mean(jump10) + med(jump10)],
+  [() => '11과 a', () => med4([5, 11, 15], 12)], [() => '8과 a', () => med4([3, 8, 14], 10)],
+  () => sol(x => eq(mean([4, 8, 12, x, 1, 2, 4, 9]), 6)), () => sol(x => eq(mean([2, 7, 10, x, 5, 3, 9]), 6))
+];
+const coin1 = [6, 3, 10, 4, 7, 1, 3, 8, 3], coin2 = [7, 2, 9, 2, 1, 6, 2, 4, 3];
+const l25 = stem([['2', '2 2 3 5'], ['3', '5 5 5 7'], ['4', '0 4 4 5 5 6 7'], ['5', '2 2 3 5 6'], ['6', '1 2 2 2 3']]);
+const l13 = stem([['1', '0 2 2 5'], ['2', '1 3 3 3 7'], ['3', '2 4 6'], ['4', '1']]);
+if (l25.length !== 25 || l13.length !== 13 || sum(coin1) !== 45 || sum(coin2) !== 36) fail('s114 자료 개수 확인');
+const wt = (mean0, mode0, mean1, newW) => { const total0 = mean0 * 5, total1 = mean1 * 5, out = total0 + newW - total1; return out; };
+// 서술형: 가능한 모든 구성(나머지 4명 몸무게)을 시험해 새 5명의 중앙값이 항상 같은지 확인한다
+const medAll = (mean0, mode0, mean1, newW, outW) => { const rest = mean0 * 5 - outW, res = new Set(); for (let a = 40; a <= 110; a++) for (let b = a; b <= 110; b++) for (let c = b; c <= 110; c++) { const d = rest - a - b - c; if (d < c || d > 110) continue; const old = [a, b, c, d, outW]; const m = modes(old); if (m.length !== 1 || m[0] !== mode0) continue; res.add(med([a, b, c, d, newW])); } if (res.size !== 1) throw new Error('중앙값이 하나로 정해지지 않음: ' + [...res]); return [...res][0]; };
+exp.s114 = [
+  [() => mean(coin1), () => med(coin1), () => mode1(coin1), () => '평균', () => minMoves(coin1, 6)],
+  [() => mean(coin2), () => med(coin2), () => mode1(coin2), () => '평균', () => minMoves(coin2, 5)],
+  [() => med(l25), () => modes(l25).map(x => x + '회').join('와 ')], [() => med(l13), () => mode1(l13)],
+  [() => mode1([6, 7, 9, 6, 3, 6, 5]), () => avgMode([6, 7, 9, 6, 5, 6]) ], [() => mode1([8, 5, 7, 8, 14, 8, 6]), () => avgMode([8, 5, 7, 8, 8, 6])],
+  [() => 76 * 5, () => wt(76, 74, 75, 74), () => medAll(76, 74, 75, 74, 79)], [() => 66 * 5, () => wt(66, 64, 65, 64), () => medAll(66, 64, 65, 64, 69)]
+];
 const val = (sp, i, k) => sp.opts ? sp.opts[sp.ans] : sp.ans;
 lessons.forEach(l => {
   const E = exp[l.id]; if (!E) return fail(l.id + ': 검증식 없음');
