@@ -88,7 +88,8 @@ function makeReport(p) {
     l.qs.forEach((_, i) => { const x = s.q[i]; if (!x) return; if (x.cause != null) w[x.cause] = (w[x.cause] || 0) + 1; if (x.hl > 0 || x.hu) hn++; });
     const st = l.qs.map((q, i) => q.steps ? { q, x: s.q[i] } : null).filter(Boolean);
     const ss = st.length ? [st.reduce((a, o) => a + (o.x ? o.q.steps.filter((_, k) => o.x.sub[k] && o.x.sub[k].first).length : 0), 0), st.reduce((a, o) => a + o.q.steps.length, 0)] : undefined;
-    ls[id] = { s: s.st, d: s.done ? 1 : 0, c: [c, n], p: s.conf != null ? CONF[s.conf] : '', r: s.refl, u: s.upd, k: solved(l, s), w, hn, ss }; });
+    const wk = {}; Object.entries(s.wk || {}).forEach(([i, t]) => { t = String(t || '').trim().slice(0, 400); if (t) wk[+i + 1] = t; });
+    ls[id] = { s: s.st, d: s.done ? 1 : 0, c: [c, n], p: s.conf != null ? CONF[s.conf] : '', r: s.refl, u: s.upd, k: solved(l, s), w, hn, ss, ...(Object.keys(wk).length ? { wk } : {}) }; });
   return { v: 2, app: APP, id: p.id, name: p.name, cls: p.cls || '', at: Date.now(), day: today(), ls };
 }
 const b64u = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
@@ -268,6 +269,10 @@ function stageQs(p, l, s, to, touch, paintAll) {
     q.steps.forEach((_, k) => { x.sub[k] = x.sub[k] || newX(); });
     body = h('div', {}, q.steps.map((st, k) => (k === 0 || x.sub[k - 1].ok) ? h('div', { class: 'stepq' }, h('p', { style: 'font-weight:600;margin:0 0 8px', text: st.q }), answerBlock(st, x.sub[k], rp, syncSteps)) : null));
   } else body = answerBlock(q, x, rp);
+  s.wk = s.wk || {};
+  const wta = h('textarea', { class: 'in work', id: 'wk' + i, rows: 4, maxlength: 400, placeholder: '여기에 풀이 과정을 써 보세요. 식과 생각을 적으면 선생님이 도와주기 쉬워요.', 'aria-label': '풀이 과정 쓰기', disabled: s.done }); wta.value = s.wk[i] || '';
+  wta.addEventListener('input', () => { s.wk[i] = wta.value; s.upd = Date.now(); save(); });
+  const work = h('div', { class: 'workbox' }, h('label', { class: 'l', for: 'wk' + i, text: '✏️ 풀이 과정 쓰기 (선택)' }), wta);
   const wrong = x.tries > 0 && !x.ok;
   const cause = wrong ? h('div', { class: 'card', style: 'margin-top:10px' }, h('b', { text: '왜 틀렸을까요?' }), h('p', { class: 'note', style: 'margin:2px 0 0', text: '골라 두면 선생님이 어디를 도와줄지 알 수 있어요. (선택)' }),
     h('div', { class: 'causes' }, CAUSES.map((c, j) => h('button', { type: 'button', class: 'opt' + (x.cause === j ? ' sel' : ''), 'aria-pressed': x.cause === j ? 'true' : 'false', text: c, onclick: () => { x.cause = j; rp(); } })))) : null;
@@ -279,7 +284,7 @@ function stageQs(p, l, s, to, touch, paintAll) {
       : h('button', { class: 'btn primary', type: 'button', disabled: !allOk(), text: '마무리하러 가기', onclick: () => to(2) }),
     last && !allOk() ? h('span', { class: 'note', style: 'margin:0', text: '아직 풀지 않은 문제가 있어요.' }) : null);
   wrap.append(dots, h('section', { class: 'card' }, h('div', { class: 'row', style: 'margin:0 0 8px' }, h('span', { class: 'lv lv' + q.lv, text: 'Lv' + q.lv + ' ' + (q.lvn || LVN[q.lv]) }), q.tag ? h('span', { class: 'chip gray', text: q.tag }) : null, h('span', { class: 'note', style: 'margin:0', text: (i + 1) + ' / ' + l.qs.length })),
-    h('div', { class: 'qt', style: 'font-weight:600;margin-bottom:4px', text: q.q }), q.fig ? q.fig() : null, body, link), ...(cause ? [cause] : []), nav);
+    h('div', { class: 'qt', style: 'font-weight:600;margin-bottom:4px', text: q.q }), q.fig ? q.fig() : null, l.work ? work : null, body, link), ...(cause ? [cause] : []), nav);
   return wrap;
 }
 function stageEnd(p, l, s, to, touch, paintAll) {
@@ -368,7 +373,8 @@ function teacherDetail(rec) {
       r ? h('div', { class: 'refl note', text: '자신감: ' + (r.p || '–') + ' · 힌트 본 문항 ' + (r.hn || 0) + ex }) : null,
       r && r.w && Object.keys(r.w).length ? h('div', { class: 'refl' }, h('small', { text: '틀린 까닭 ' }), Object.entries(r.w).map(([k, v]) => (CAUSES[k] || '기타') + ' ' + v).join(' · ')) : null,
       r && r.r && r.r[0] ? h('div', { class: 'refl' }, h('small', { text: '한 줄 정리 ' }), r.r[0]) : null,
-      r && r.r && r.r[1] ? h('div', { class: 'refl' }, h('small', { text: '헷갈리는 점 ' }), r.r[1]) : null)); });
+      r && r.r && r.r[1] ? h('div', { class: 'refl' }, h('small', { text: '헷갈리는 점 ' }), r.r[1]) : null,
+      r && r.wk ? Object.entries(r.wk).map(([n, t]) => h('div', { class: 'refl' }, h('small', { text: n + '번 풀이 ' }), t)) : null)); });
   return out;
 }
 
