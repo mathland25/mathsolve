@@ -88,8 +88,7 @@ function makeReport(p) {
     l.qs.forEach((_, i) => { const x = s.q[i]; if (!x) return; if (x.cause != null) w[x.cause] = (w[x.cause] || 0) + 1; if (x.hl > 0 || x.hu) hn++; });
     const st = l.qs.map((q, i) => q.steps ? { q, x: s.q[i] } : null).filter(Boolean);
     const ss = st.length ? [st.reduce((a, o) => a + (o.x ? o.q.steps.filter((_, k) => o.x.sub[k] && o.x.sub[k].first).length : 0), 0), st.reduce((a, o) => a + o.q.steps.length, 0)] : undefined;
-    const wk = {}; Object.entries(s.wk || {}).forEach(([i, t]) => { t = String(t || '').trim().slice(0, 400); if (t) wk[+i + 1] = t; });
-    ls[id] = { s: s.st, d: s.done ? 1 : 0, c: [c, n], p: s.conf != null ? CONF[s.conf] : '', r: s.refl, u: s.upd, k: solved(l, s), w, hn, ss, ...(Object.keys(wk).length ? { wk } : {}) }; });
+    ls[id] = { s: s.st, d: s.done ? 1 : 0, c: [c, n], p: s.conf != null ? CONF[s.conf] : '', r: s.refl, u: s.upd, k: solved(l, s), w, hn, ss }; });
   return { v: 2, app: APP, id: p.id, name: p.name, cls: p.cls || '', at: Date.now(), day: today(), ls };
 }
 const b64u = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
@@ -256,6 +255,33 @@ function answerBlock(sp, x, rp, after) {
       x.hl < hs.length ? h('button', { class: 'btn sm', type: 'button', text: '힌트 보기', onclick: () => { x.hl++; x.hu = true; rp(); } }) : null,
       x.tries >= 2 ? h('button', { class: 'btn sm', type: 'button', text: '풀이 보기', onclick: () => { x.show = true; x.ok = true; after && after(); rp(); } }) : null) : null);
 }
+
+/* 연습장: 손가락·펜으로 쓰는 낙서판. 기기 안에서만 쓰고 제출하지 않아요. (문제마다 따로, 화면을 다시 그려도 남아요) */
+const PAD = {};
+function scratch(key) {
+  const P = PAD[key] || (PAD[key] = { open: false, strokes: [], pen: 'pen' });
+  const box = h('div', { class: 'padbox' });
+  const paint = () => {
+    box.replaceChildren();
+    const tog = h('button', { class: 'btn sm', type: 'button', 'aria-expanded': P.open ? 'true' : 'false', text: P.open ? '✏️ 연습장 접기' : '✏️ 연습장 열기' + (P.strokes.length ? ' (쓴 내용 있어요)' : ''), onclick: () => { P.open = !P.open; paint(); } });
+    box.append(tog); if (!P.open) return;
+    const cv = h('canvas', { class: 'padcv', 'aria-label': '연습장. 손가락이나 펜으로 쓸 수 있어요.' }), ctx = cv.getContext('2d');
+    const draw = () => { const w = cv.clientWidth, hh = cv.clientHeight, r = window.devicePixelRatio || 1; if (cv.width !== Math.round(w * r)) { cv.width = Math.round(w * r); cv.height = Math.round(hh * r); }
+      ctx.setTransform(r, 0, 0, r, 0, 0); ctx.clearRect(0, 0, w, hh); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      P.strokes.forEach(st => { ctx.strokeStyle = st.e ? '#fff' : st.c; ctx.globalCompositeOperation = st.e ? 'destination-out' : 'source-over'; ctx.lineWidth = st.e ? 22 : 3; ctx.beginPath();
+        st.p.forEach(([x, y], k) => k ? ctx.lineTo(x * w, y * hh) : ctx.moveTo(x * w, y * hh)); if (st.p.length === 1) ctx.lineTo(st.p[0][0] * w + .1, st.p[0][1] * hh); ctx.stroke(); }); ctx.globalCompositeOperation = 'source-over'; };
+    let cur = null;
+    const pt = e => { const b = cv.getBoundingClientRect(); return [(e.clientX - b.left) / b.width, (e.clientY - b.top) / b.height]; };
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.setPointerCapture(e.pointerId); cur = { e: P.pen === 'eraser', c: P.pen === 'red' ? '#d62828' : '#1b3a5c', p: [pt(e)] }; P.strokes.push(cur); draw(); });
+    cv.addEventListener('pointermove', e => { if (!cur) return; e.preventDefault(); (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]).forEach(ev => cur.p.push(pt(ev))); draw(); });
+    ['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, () => { cur = null; }));
+    const tool = (id, lab) => h('button', { class: 'btn sm' + (P.pen === id ? ' primary' : ''), type: 'button', text: lab, 'aria-pressed': P.pen === id ? 'true' : 'false', onclick: () => { P.pen = id; paint(); } });
+    box.append(h('div', { class: 'row padtools' }, tool('pen', '✏️ 펜'), tool('red', '🖍 빨강'), tool('eraser', '지우개'),
+      h('button', { class: 'btn sm', type: 'button', text: '실행 취소', onclick: () => { P.strokes.pop(); draw(); } }), h('button', { class: 'btn sm', type: 'button', text: '모두 지우기', onclick: () => { P.strokes.length = 0; draw(); } })), cv,
+      h('p', { class: 'note', style: 'margin:2px 0 0', text: '연습장은 선생님에게 제출되지 않아요. 식이나 그림을 마음껏 써 보세요.' }));
+    requestAnimationFrame(draw); };
+  paint(); return box;
+}
 function stageQs(p, l, s, to, touch, paintAll) {
   const i = Math.min(s.qi || 0, l.qs.length - 1), q = l.qs[i], x = qst(s, i);
   const wrap = h('div'), dots = h('div', { class: 'pdots', role: 'group', 'aria-label': '문제 번호' });
@@ -269,10 +295,7 @@ function stageQs(p, l, s, to, touch, paintAll) {
     q.steps.forEach((_, k) => { x.sub[k] = x.sub[k] || newX(); });
     body = h('div', {}, q.steps.map((st, k) => (k === 0 || x.sub[k - 1].ok) ? h('div', { class: 'stepq' }, h('p', { style: 'font-weight:600;margin:0 0 8px', text: st.q }), answerBlock(st, x.sub[k], rp, syncSteps)) : null));
   } else body = answerBlock(q, x, rp);
-  s.wk = s.wk || {};
-  const wta = h('textarea', { class: 'in work', id: 'wk' + i, rows: 4, maxlength: 400, placeholder: '여기에 풀이 과정을 써 보세요. 식과 생각을 적으면 선생님이 도와주기 쉬워요.', 'aria-label': '풀이 과정 쓰기', disabled: s.done }); wta.value = s.wk[i] || '';
-  wta.addEventListener('input', () => { s.wk[i] = wta.value; s.upd = Date.now(); save(); });
-  const work = h('div', { class: 'workbox' }, h('label', { class: 'l', for: 'wk' + i, text: '✏️ 풀이 과정 쓰기 (선택)' }), wta);
+  const work = scratch(l.id + ':' + i);
   const wrong = x.tries > 0 && !x.ok;
   const cause = wrong ? h('div', { class: 'card', style: 'margin-top:10px' }, h('b', { text: '왜 틀렸을까요?' }), h('p', { class: 'note', style: 'margin:2px 0 0', text: '골라 두면 선생님이 어디를 도와줄지 알 수 있어요. (선택)' }),
     h('div', { class: 'causes' }, CAUSES.map((c, j) => h('button', { type: 'button', class: 'opt' + (x.cause === j ? ' sel' : ''), 'aria-pressed': x.cause === j ? 'true' : 'false', text: c, onclick: () => { x.cause = j; rp(); } })))) : null;
@@ -373,8 +396,7 @@ function teacherDetail(rec) {
       r ? h('div', { class: 'refl note', text: '자신감: ' + (r.p || '–') + ' · 힌트 본 문항 ' + (r.hn || 0) + ex }) : null,
       r && r.w && Object.keys(r.w).length ? h('div', { class: 'refl' }, h('small', { text: '틀린 까닭 ' }), Object.entries(r.w).map(([k, v]) => (CAUSES[k] || '기타') + ' ' + v).join(' · ')) : null,
       r && r.r && r.r[0] ? h('div', { class: 'refl' }, h('small', { text: '한 줄 정리 ' }), r.r[0]) : null,
-      r && r.r && r.r[1] ? h('div', { class: 'refl' }, h('small', { text: '헷갈리는 점 ' }), r.r[1]) : null,
-      r && r.wk ? Object.entries(r.wk).map(([n, t]) => h('div', { class: 'refl' }, h('small', { text: n + '번 풀이 ' }), t)) : null)); });
+      r && r.r && r.r[1] ? h('div', { class: 'refl' }, h('small', { text: '헷갈리는 점 ' }), r.r[1]) : null));  });
   return out;
 }
 
