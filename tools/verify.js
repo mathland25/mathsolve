@@ -212,6 +212,87 @@ exp.s114 = [
   [() => mode1([6, 7, 9, 6, 3, 6, 5]), () => avgMode([6, 7, 9, 6, 5, 6]) ], [() => mode1([8, 5, 7, 8, 14, 8, 6]), () => avgMode([8, 5, 7, 8, 8, 6])],
   [() => 76 * 5, () => wt(76, 74, 75, 74), () => medAll(76, 74, 75, 74, 79)], [() => 66 * 5, () => wt(66, 64, 65, 64), () => medAll(66, 64, 65, 64, 69)]
 ];
+
+// ---- 중3 산포도(s115~s118)·산점도와 상관관계(s119~s121) ----
+const vr = a => mean(a.map(x => (x - mean(a)) ** 2)), sdv = a => Math.sqrt(vr(a));
+const rd = (v, d) => Math.round(v * 10 ** d + 1e-9) / 10 ** d;
+const zero = dv => { if (Math.abs(sum(dv)) > 1e-9) throw new Error('편차 합이 0이 아님: ' + dv); return dv; };
+const ssq = a => sum(a.map(x => (x - mean(a)) ** 2));
+const xfind = d => -sum(d.filter(v => v !== null));
+const small = (a, b, na, nb) => vr(a) < vr(b) ? na : nb;
+const hd = [8, 5, 3, 7, 5, 2], hd2 = [9, 4, 6, 8, 3, 6];
+const dev3 = a => [() => a[0] - mean(a), () => a[2] - mean(a), () => sum(a.map(x => x - mean(a)))];
+const four2 = a => [() => mean(a), () => ssq(a), () => vr(a), () => sdv(a)];
+exp.s115 = [dev3(hd), [() => hd2[0] - mean(hd2), () => hd2[1] - mean(hd2), () => sum(hd2.map(x => x - mean(hd2)))],
+  [() => mean([1, 0, 3, 3, 5, 3, 4, 4, 2, 3]), () => ssq([1, 0, 3, 3, 5, 3, 4, 4, 2, 3]), () => vr([1, 0, 3, 3, 5, 3, 4, 4, 2, 3]), () => sdv([1, 0, 3, 3, 5, 3, 4, 4, 2, 3])],
+  four2([8, 5, 11, 9, 7]),
+  [() => mean([25, 24, 26, 28, 27, 22, 23]), () => vr([25, 24, 26, 28, 27, 22, 23])], [() => mean([12, 15, 11, 14, 13]), () => vr([12, 15, 11, 14, 13])],
+  [() => mean([6, 9, 5, 8, 7]), () => vr([6, 9, 5, 8, 7]), () => rd(sdv([6, 9, 5, 8, 7]), 1)], [() => mean([10, 14, 12, 15, 9]), () => vr([10, 14, 12, 15, 9]), () => rd(sdv([10, 14, 12, 15, 9]), 1)]
+];
+exp.s116 = [
+  () => -(-4 + 2 - 3 + 6), () => -(2 - 3 + 1 + 4), () => -(5 - 2 + 3 - 4 - 1), () => -(-3 + 4 - 2 - 1 + 0),
+  [() => -(1 + 2 - 1 + 0), () => 72 + -(1 + 2 - 1 + 0)], [() => -(4 - 3 + 3 - 1), () => 78 + -(4 - 3 + 3 - 1)],
+  [() => 3, () => vr(zero([1, -1, 3, -3, 0])), () => sdv([1, -1, 3, -3, 0])], [() => 1, () => vr(zero([2, -2, -1, 1, 0])), () => rd(sdv([2, -2, -1, 1, 0]), 2)],
+  [() => vr(zero([-3, 1, -6, 5, 3])), () => sdv([-3, 1, -6, 5, 3])], [() => vr(zero([-3, -1, 0, 1, 3])), () => sdv([-3, -1, 0, 1, 3])]
+];
+const jin = [9, 7, 6, 6, 9, 6, 7, 6, 6, 8], hyun = [6, 7, 7, 6, 8, 7, 7, 7, 7, 8];
+const cmp = (a, b, na, nb) => [() => mean(a), () => mean(b), () => vr(a), () => vr(b), () => small(a, b, na, nb)];
+const eA = [60, 62, 61, 58, 58, 59, 63, 59], eB = [59, 64, 62, 63, 56, 57, 61, 58], eC = [15, 17, 16, 19, 13, 14, 18, 16], eD = [12, 18, 17, 15, 19, 14, 16, 17];
+const skA = [34.42, 34.77, 34.86, 35.08, 34.62], skB = [34.74, 35.01, 34.42, 34.45, 35.13], swC = [50.1, 50.3, 50.2, 50.4, 50.0], swD = [50.0, 50.6, 50.1, 50.5, 49.8];
+const best = (m, n) => n[m.indexOf(Math.max(...m))], tight = (s, n) => n[s.indexOf(Math.min(...s))];
+exp.s117 = [cmp(jin, hyun, '진수', '현지'), cmp([7, 9, 8, 6, 10], [8, 8, 7, 9, 8], '소라', '지우'),
+  [() => rd(sdv(eA), 2), () => rd(sdv(eB), 2), () => small(eA, eB, 'A 상자', 'B 상자')], [() => rd(sdv(eC), 2), () => rd(sdv(eD), 2), () => small(eC, eD, 'C 상자', 'D 상자')],
+  [() => rd(sdv(skA), 2), () => rd(sdv(skB), 2), () => small(skA, skB, '선수 A', '선수 B')], [() => rd(sdv(swC), 2), () => rd(sdv(swD), 2), () => small(swC, swD, '선수 C', '선수 D')],
+  [() => vr([6, 7, 7, 10, 10]), () => vr([5, 5, 5, 7, 8]), () => small([6, 7, 7, 10, 10], [5, 5, 5, 7, 8], 'A 모둠', 'B 모둠')], [() => vr([4, 6, 7, 8, 10]), () => vr([6, 6, 7, 8, 8]), () => small([4, 6, 7, 8, 10], [6, 6, 7, 8, 8], 'C 모둠', 'D 모둠')],
+  [() => best([75, 67, 66], ['A반', 'B반', 'C반']), () => tight([7.5, 9.8, 5.3], ['A반', 'B반', 'C반'])], [() => best([70, 74, 72], ['가반', '나반', '다반']), () => tight([6.2, 8.8, 4.1], ['가반', '나반', '다반'])]
+];
+if (!eq(mean(eA), 60) || !eq(mean(eB), 60) || !eq(mean(eC), 16) || !eq(mean(eD), 16)) fail('달걀·귤 상자 평균이 같지 않음');
+if (!eq(mean(skA), mean(skB)) || !eq(mean(swC), mean(swD))) fail('기록 평균이 같지 않음');
+const rainOk = (known, mo, tot) => tot - sum(known);
+const solve2ab = (fixed, m) => { const r = []; for (let a = -30; a <= 60; a++) for (let b2 = a + 1; b2 <= 60; b2++) { const arr = [...fixed, a, b2]; if (eq(mean(arr), m) && eq(med(arr), m)) r.push([a, b2]); } if (r.length !== 1) throw new Error('(a, b)가 하나로 정해지지 않음: ' + JSON.stringify(r)); return r[0]; };
+const truthIdx = (dv, stm) => { const f = stm.map((s, i) => s(dv) ? null : i).filter(i => i !== null); if (f.length !== 1) throw new Error('옳지 않은 것이 하나가 아님: ' + f); return f[0]; };
+const names = ['A', 'B', 'C', 'D'], order = dv => dv.map((d, i) => [d, names[i]]).sort((p, q) => p[0] - q[0]).map(p => p[1]).join(',');
+const stm1 = [d => d[0] === Math.max(...d), d => d[1] < 0, d => d[0] - d[3] === 7, d => d[2] === 0, d => order(d) === 'B,C,D,A'];
+const stm2 = [d => d[0] === Math.min(...d), d => d[1] > 0, d => d[2] === d[3], d => d[1] - d[0] === 6, d => d.includes(0)];
+const o1 = ['① A의 점수가 가장 높다.', '② B는 평균보다 낮은 점수를 받았다.', '③ A는 D보다 점수가 7점 높다.', '④ C는 평균 점수를 받았다.', '⑤ 점수가 낮은 학생부터 차례대로 나열하면 B, C, D, A이다.'];
+const o2 = ['① A의 점수가 가장 낮다.', '② B는 평균보다 높은 점수를 받았다.', '③ C와 D의 점수는 같다.', '④ B는 A보다 점수가 6점 높다.', '⑤ 평균 점수를 받은 학생이 있다.'];
+const mt = (m, v) => { const sq = 3 * (v + m * m); if ((3 * m) ** 2 / 3 > sq + 1e-9) throw new Error('직육면체 조건 불가능'); return [3 * m, sq]; };
+exp.s118 = [
+  [() => rainOk([11, 7, 10, 8, 11], 0, 60), () => vr([11, 7, 10, 8, 13, 11]), () => sdv([11, 7, 10, 8, 13, 11])], [() => rainOk([6, 9, 8, 5], 0, 35), () => vr([6, 9, 7, 8, 5]), () => rd(sdv([6, 9, 7, 8, 5]), 2)],
+  [() => solve2ab([2, 1, 8], 5).reduce((x, y) => x + y), () => solve2ab([2, 1, 8], 5)[0], () => vr([2, ...solve2ab([2, 1, 8], 5), 1, 8])],
+  [() => solve2ab([1, 3, 7], 5).reduce((x, y) => x + y), () => solve2ab([1, 3, 7], 5)[0], () => vr([1, 3, 7, ...solve2ab([1, 3, 7], 5)])],
+  [() => -sum([5, -3, -2]), () => o1[truthIdx([5, -3, 0, -2], stm1)]], [() => -sum([-4, 2, 1]), () => o2[truthIdx([-4, 2, 1, 1], stm2)]],
+  [() => mt(10, 4)[0], () => mt(10, 4)[1]], [() => mt(8, 3)[0], () => mt(8, 3)[1]]
+];
+
+// ---- 산점도와 상관관계: 점 좌표(pts)에서 상관계수·개수를 다시 계산 ----
+const pear = p => { const n = p.length, mx = mean(p.map(a => a[0])), my = mean(p.map(a => a[1])); return sum(p.map(a => (a[0] - mx) * (a[1] - my))) / Math.sqrt(sum(p.map(a => (a[0] - mx) ** 2)) * sum(p.map(a => (a[1] - my) ** 2))); };
+const KINDS = ['양의 상관관계', '음의 상관관계', '상관관계가 없다'];
+const kindOf = p => { const r = pear(p); return r > 0.5 ? KINDS[0] : r < -0.5 ? KINDS[1] : Math.abs(r) < 0.3 ? KINDS[2] : (() => { throw new Error('상관관계가 애매함 r=' + r); })(); };
+const trendOf = (p, pos, neg) => pear(p) > 0.5 ? pos : pear(p) < -0.5 ? neg : '?';
+const yAt = (p, x) => { const r = p.filter(a => Math.abs(a[0] - x) < 1e-9).map(a => a[1]); if (r.length !== 1) throw new Error('x=' + x + '인 점이 하나가 아님'); return r[0]; };
+const yMax = (p, x) => Math.max(...p.filter(a => Math.abs(a[0] - x) < 1e-9).map(a => a[1]));
+const PQ = id => lessons.find(l => l.id === id).qs.map(q => q.pts);
+const [p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11] = PQ('s119');
+const HL = ['높다', '낮다', '관계가 없다'], UD = ['증가하는 경향이 있다', '감소하는 경향이 있다', '변화가 없다'];
+exp.s119 = [
+  [() => yAt(p0, 30), () => trendOf(p0, '높다', '낮다')], [() => yAt(p1, 1500), () => trendOf(p1, '높다', '낮다')],
+  [() => yAt(p2, 54), () => trendOf(p2, UD[0], UD[1])], [() => yAt(p3, 14), () => trendOf(p3, UD[0], UD[1])],
+  [() => yMax(p4, 5), () => trendOf(p4, UD[0], UD[1])], [() => yAt(p5, 160), () => trendOf(p5, UD[0], UD[1])],
+  [() => yAt(p6, 500), () => kindOf(p6)], [() => yAt(p7, 30), () => kindOf(p7)], [() => yAt(p8, 58), () => kindOf(p8)],
+  [() => yAt(p9, 3), () => kindOf(p9)], [() => yAt(p10, 0.4), () => kindOf(p10)], [() => yAt(p11, 2.0), () => kindOf(p11)]
+];
+const [q0, q1, q2, q3, q4, q5, q6] = PQ('s120');
+const both = (p, t) => p.filter(a => a[0] >= t && a[1] >= t).length;
+exp.s120 = [
+  [() => kindOf(q0), () => both(q0, 60)], [() => kindOf(q1), () => both(q1, 70)],
+  [() => q2.filter(a => a[1] > a[0]).length, () => q2.filter(a => a[1] === a[0]).length / q2.length * 100], [() => q3.filter(a => a[1] > a[0]).length, () => q3.filter(a => a[1] === a[0]).length / q3.length * 100],
+  [() => yMax(q4, Math.max(...q4.map(a => a[0]))), () => kindOf(q4)], [() => yAt(q5, 300), () => kindOf(q5)], [() => yMax(q6, 35), () => kindOf(q6)]
+];
+const strength = p => Math.abs(pear(p)) >= 0.9 ? '강하다' : '약하다';
+const [r0, r1, r2, r3, r4, r5] = PQ('s121');
+exp.s121 = [[() => kindOf(r0), () => strength(r0)], [() => kindOf(r1), () => strength(r1)], [() => kindOf(r2), () => strength(r2)], [() => kindOf(r3), () => strength(r3)], [() => kindOf(r4)], [() => kindOf(r5)],
+  [() => '아이스크림 판매량이 물놀이 사고의 원인이라고 단정했다.', () => '두 변량이 모두 최고 기온과 양의 상관관계가 있기 때문이다.'], [() => '상관관계가 있다고 해서 에어컨 판매가 식중독의 원인이라고 단정했다.']];
 const val = (sp, i, k) => sp.opts ? sp.opts[sp.ans] : sp.ans;
 lessons.forEach(l => {
   const E = exp[l.id]; if (!E) return fail(l.id + ': 검증식 없음');
