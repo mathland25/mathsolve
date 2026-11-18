@@ -28,3 +28,4 @@
 ## 화면 구성
 - index.html: 학생용 (교사용 링크 없음)
 - teacher.html: 교사용 전용 (시트 자동 읽기, 학급별 집계, 반 이동). 주소: https://mathland25.github.io/mathsolve/teacher.html
+- calc.js: 학생용 떠 있는 계산기(+−×÷, 괄호, ^, √, %, Ans). 저장·제출과 무관.
