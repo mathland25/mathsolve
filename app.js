@@ -4,7 +4,8 @@
 'use strict';
 const { h } = window.SF;
 const GRADES = window.SOLVE_GRADES || [], CAUSES = window.SOLVE_CAUSES || [];
-const TEACHER_ONLY = !!window.__TEACHER_ONLY;
+const FIXED_T = !!window.__TEACHER_ONLY;
+const isT = () => FIXED_T || location.hash === '#teacher';
 const KEY = 'solve-v1', TKEY = 'solve-teacher-v1';
 const APP = 'solve';
 const CONCEPT_URL = 'https://mathland25.github.io/mathconcept/';
@@ -136,8 +137,8 @@ function go(v, param) { view = v; vparam = param; render(); window.scrollTo(0, 0
 function render() {
   const app = $('#app'); app.replaceChildren();
   const p = me();
-  if (TEACHER_ONLY) view = 'teacher';
-  if (view === 'teacher' && !TEACHER_ONLY) view = DB.cur ? 'home' : 'welcome';
+  if (isT()) view = 'teacher';
+  if (view === 'teacher' && !isT()) view = DB.cur ? 'home' : 'welcome';
   if (view === 'teacher') return app.append(viewTeacher());
   if (!p) view = 'welcome';
   if (view === 'welcome') return app.append(viewWelcome());
@@ -355,7 +356,7 @@ function essayText(list) {
 }
 function viewTeacher() {
   const rec = tsel && TD.students[tsel];
-  const wrap = h('div', {}, h('header', { class: 'top' }, h('div', { class: 'row', style: 'margin:0' }, (rec || !TEACHER_ONLY) ? h('button', { class: 'btn sm ghost', onclick: () => { if (rec) { tsel = null; render(); } else go(DB.cur ? 'home' : 'welcome'); }, text: rec ? '← 학급 목록' : '← 학생 화면' }) : null, h('b', { text: rec ? rec.rep.name + ' 학생' : '교사용 · 문제해결 학급 진도' })), brand()));
+  const wrap = h('div', {}, h('header', { class: 'top' }, h('div', { class: 'row', style: 'margin:0' }, (rec || !FIXED_T) ? h('button', { class: 'btn sm ghost', onclick: () => { if (rec) { tsel = null; render(); } else { if (location.hash === '#teacher') history.replaceState(null, '', location.pathname + location.search); go(DB.cur ? 'home' : 'welcome'); } }, text: rec ? '← 학급 목록' : '← 학생 화면' }) : null, h('b', { text: rec ? rec.rep.name + ' 학생' : '교사용 · 문제해결 학급 진도' })), brand()));
   if (SHEET_CSV && !rec) wrap.append(h('div', { class: 'row' }, h('button', { class: 'btn sm', type: 'button', text: '시트에서 새로고침', onclick: () => sheetPull(true) }), h('span', { class: 'note', style: 'margin:0', text: '열 때 자동으로 가져와요 (이 앱의 기록만 읽어요)' })));
   if (rec) { wrap.append(...teacherDetail(rec)); return wrap; }
   const rows = Object.keys(TD.students).map(k => ({ key: k, rep: TD.students[k].rep, a: analyze(TD.students[k].rep) })).sort((a, b) => ((a.rep.cls ? 0 : 1) - (b.rep.cls ? 0 : 1)) || (a.rep.cls || '').localeCompare(b.rep.cls || '', 'ko', { numeric: true }) || a.rep.name.localeCompare(b.rep.name, 'ko'));
@@ -403,7 +404,7 @@ function teacherDetail(rec) {
 /* ---------- 시작 ---------- */
 load();
 if (DB.profiles.length && !DB.profiles.some(p => p.id === DB.cur)) DB.cur = DB.profiles.length === 1 ? DB.profiles[0].id : null;
-const route = () => { view = TEACHER_ONLY ? 'teacher' : (DB.cur ? 'home' : 'welcome'); tsel = null; render(); };
+const route = () => { view = isT() ? 'teacher' : (DB.cur ? 'home' : 'welcome'); tsel = null; render(); };
 window.addEventListener('hashchange', route);
 route();
 window.__app = { DB: () => DB, TD: () => TD, go, render, makeReport, packReport, unpackReport, importCodes, addRep, LESSONS, normNum, normCls };
