@@ -248,7 +248,9 @@ function answerBlock(sp, x, rp, after) {
   if (sp.opts) ctrl = h('div', { class: 'opts' }, sp.opts.map((o, j) => h('button', { type: 'button', class: 'opt' + (x.ok && j === sp.ans ? ' good' : x.pick === j && !x.ok ? ' bad' : ''), disabled: done, text: o, onclick: () => fire(j) })));
   else { const inp = h('input', { class: 'in', inputmode: 'decimal', autocomplete: 'off', 'aria-label': '답', value: x.val || '', disabled: done });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') fire(inp.value); });
-    ctrl = h('div', { class: 'ans' }, inp, sp.unit ? h('span', { text: sp.unit }) : null, h('button', { class: 'btn', type: 'button', disabled: done, text: '확인', onclick: () => fire(inp.value) })); }
+    const key = (txt, lab, fn) => h('button', { class: 'btn sm keyb', type: 'button', disabled: done, text: txt, 'aria-label': lab, onmousedown: e => e.preventDefault(), onclick: () => { fn(); inp.focus(); } });
+    const sign = () => { inp.value = /^[-−]/.test(inp.value) ? inp.value.replace(/^[-−]/, '') : '−' + inp.value; };
+    ctrl = h('div', { class: 'ans' }, key('−', '마이너스 부호', sign), key('/', '분수 막대', () => { inp.value += '/'; }), inp, sp.unit ? h('span', { text: sp.unit }) : null, h('button', { class: 'btn', type: 'button', disabled: done, text: '확인', onclick: () => fire(inp.value) })); }
   return h('div', {}, ctrl,
     hs.slice(0, x.hl).map((t, i) => h('div', { class: 'fb hint', text: '힌트 ' + (i + 1) + ' · ' + t })),
     x.ok ? h('div', { class: 'fb good', text: (x.show ? '정답 확인: ' : '정답! ') + sp.why }) : x.tries ? h('div', { class: 'fb bad', text: '아쉬워요. 다시 생각해 볼까요?' }) : null,
