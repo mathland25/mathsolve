@@ -40,7 +40,7 @@ const sqSide = (ab, bc) => { const x = ab * bc / (ab + bc); if (!eq((ab - x) / a
 const para = (AD, AF, CF) => { const CE = CF * AD / AF; return CE; };
 exp.s91 = [
   [() => R(4, 8), () => 6 * 4 / 8, () => 50],
-  [() => R(12, 8), () => 15 * 8 / 12, () => 180 - 70 - 45],
+  [() => R(12, 9), () => 16 * 9 / 12, () => 180 - 70 - 45],
   () => 52 * (12 / 8) ** 2,
   () => 75 * (6 / 10) ** 2,
   [() => '△ABC ∽ △DEC', () => { if (!(eq(3 / 6, 4 / 8))) throw 0; return 'SAS 닮음'; }],
