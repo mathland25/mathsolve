@@ -187,3 +187,9 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.6}
 .ck{min-height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper2);font-size:1.1rem;font-weight:600;padding:0}
 .ck.num{background:var(--paper)}.ck.clr{color:var(--red)}.ck.eq{background:var(--blue);border-color:var(--blue);color:var(--paper)}
 .keyb{min-width:44px;padding:0 10px;font-size:1.15rem;font-weight:700}
+
+/* 교사용 표: 학생 이름 고정, 나머지는 가로 스크롤 */
+.mx.frz th,.mx.frz td{white-space:nowrap}
+.mx.frz th:first-child,.mx.frz td:first-child{position:sticky;left:0;z-index:2;background:var(--paper);box-shadow:2px 0 0 var(--line)}
+.mx.frz th:nth-child(2),.mx.frz td:nth-child(2){background:var(--gold-soft)}
+.cell.tdy{background:var(--gold-soft);color:var(--gold);font-weight:700}

@@ -337,6 +337,8 @@ function analyze(rep) {
   const tot = rows.reduce((a, x) => a + (x.r && x.r.d ? x.r.c[1] : 0), 0), ok = rows.reduce((a, x) => a + (x.r && x.r.d ? x.r.c[0] : 0), 0);
   return { rows, done, tot, ok };
 }
+const sameDay = t => { if (!t) return false; const a = new Date(t), b = new Date(); return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); };
+const todayCell = rows => { const t = rows.filter(x => x.r && sameDay(x.r.u)); return t.length ? h('span', { class: 'cell tdy', title: t.map(x => lno(x.l)).join(', '), text: t.length + '차시' }) : h('span', { class: 'cell n', text: '–' }); };
 const cell = (x) => !x.r ? h('span', { class: 'cell n', text: '–' }) : x.r.d ? h('span', { class: 'cell d', text: '✓ ' + x.r.c[0] + '/' + x.r.c[1] }) : h('span', { class: 'cell p', text: (x.r.k || 0) + '/' + x.r.c[1] });
 function elTable(list) {
   const els = readyLessons().filter(l => l.el); if (!els.length || !list.length) return null;
@@ -377,8 +379,8 @@ function viewTeacher() {
   (tcls === '전체' ? clsList : [tcls]).forEach(c => { const g = shown.filter(r => (r.rep.cls || '반 없음') === c); if (!g.length) return;
     const done = g.reduce((s, r) => s + r.a.done, 0), tot = g.reduce((s, r) => s + r.a.tot, 0), ok = g.reduce((s, r) => s + r.a.ok, 0);
     wrap.append(h('section', { class: 'card', style: 'margin-top:12px' }, h('div', { class: 'row', style: 'margin:0 0 8px;justify-content:space-between' }, h('b', { text: c + ' (' + g.length + '명)' }), h('span', { class: 'note', style: 'margin:0', text: '완료 ' + done + '/' + g.length * ready.length + ' 차시 · 첫 시도 ' + (tot ? pct(ok / tot) + '%' : '–') })),
-      h('div', { class: 'tscroll' }, h('table', { class: 'mx' }, h('thead', {}, h('tr', {}, h('th', { text: '학생' }), ready.map(l => h('th', { title: l.title, text: lno(l) })), h('th', { text: '첫 시도 정답률' }))),
-        h('tbody', {}, g.map(r => h('tr', { onclick: () => { tsel = r.key; render(); } }, h('td', {}, h('b', { text: r.rep.name })), r.a.rows.map(x => h('td', {}, cell(x))), h('td', { text: r.a.tot ? pct(r.a.ok / r.a.tot) + '%' : '–' }))))))));
+      h('div', { class: 'tscroll' }, h('table', { class: 'mx frz' }, h('thead', {}, h('tr', {}, h('th', { text: '학생' }), h('th', { text: '오늘', title: '오늘 푼 차시 수' }), ready.map(l => h('th', { title: l.title, text: lno(l) })), h('th', { text: '첫 시도 정답률' }))),
+        h('tbody', {}, g.map(r => h('tr', { onclick: () => { tsel = r.key; render(); } }, h('td', {}, h('b', { text: r.rep.name })), h('td', {}, todayCell(r.a.rows)), r.a.rows.map(x => h('td', {}, cell(x))), h('td', { text: r.a.tot ? pct(r.a.ok / r.a.tot) + '%' : '–' }))))))));
   });
   const tally = causeTally(shown.flatMap(r => r.a.rows));
   wrap.append(elTable(shown.map(r => r.a)),
